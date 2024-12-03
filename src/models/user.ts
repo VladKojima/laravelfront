@@ -1,13 +1,7 @@
-import { post } from "../api/api";
-import { route } from "../utils/decorators";
-
 export enum Roles {
     ADMIN, EMPLOYEE, CLIENT
 }
 
-@route({
-    post: "/users"
-})
 export class User {
     id?: number;
     username: string;
@@ -25,9 +19,5 @@ export class User {
         this.role = model.role;
         this.phone_number = model.phone_number;
         this.date_joined = model.date_joined;
-    }
-
-    post() {
-        return post(User, this);
     }
 }

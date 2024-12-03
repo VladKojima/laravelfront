@@ -1,14 +1,18 @@
 import { Event } from "../models/event";
-import { getMultipleWithMapper } from "./api";
+import { api } from "./api";
 
-export function getEvents(): Promise<Event[]> {
-    return Promise.resolve([
-        new Event({id: 10, name: "Birthday"}),
-        new Event({id: 1, name: "Corporate"}),
-        new Event({id: 3, name: "Wedding"}),
-        new Event({id: 6, name: "Event"}),
-    ])
+export const EventAgent = {
+    promises: {} as {
+        get?: Promise<Event[]>
+    },
 
-    //
-    return getMultipleWithMapper("/events", Event);
+    get() {
+        const self = EventAgent;
+        if (!self.promises.get)
+            self.promises.get = api.get('/events')
+                .then(res => (res.data as [])
+                    .map(v => new Event(v)))
+                .finally(() => { delete self.promises.get });
+        return self.promises.get;
+    }
 }

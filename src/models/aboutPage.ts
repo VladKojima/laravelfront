@@ -1,9 +1,3 @@
-import { getMultiple } from "../api/api";
-import { route } from "../utils/decorators";
-
-@route({
-    getAll: "/about-page"
-})
 export class AboutPage {
     id: number;
     title: string;
@@ -15,9 +9,5 @@ export class AboutPage {
         this.title = model.title;
         this.description = model.description;
         this.image_url = model.image_url;
-    }
-
-    static get() {
-        return getMultiple(AboutPage) as Promise<AboutPage>;
     }
 }

@@ -1,12 +1,18 @@
 import { Hall } from "../models/hall";
-import { getMultipleWithMapper } from "./api";
+import { api } from "./api";
 
-export function getHalls(): Promise<Hall[]> {
-    return Promise.resolve([
-        new Hall({ id: 10, name: "New Hall", capacity: 10, description: "SHHHIiaza"}),
-        new Hall({ id: 1, name: "Old Hall", capacity: 20, description: "sasall" }),
-    ]);
+export const HallAgent = {
+    promises: {} as {
+        get?: Promise<Hall[]>
+    },
 
-    //
-    return getMultipleWithMapper("/halls", Hall);
+    get() {
+        const self = HallAgent;
+        if (!self.promises.get)
+            self.promises.get = api.get("/halls")
+                .then(res => (res.data as [])
+                    .map(v => new Hall(v)))
+                .finally(() => { delete self.promises.get });
+        return self.promises.get;
+    }
 }
