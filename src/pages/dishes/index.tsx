@@ -1,21 +1,22 @@
 import { Box, List, Tab, Tabs } from "@mui/material"
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import style from './style.module.css'
 import { Dish, DishTypeLabels, DishTypes } from "../../models/dish";
 import { DishListItem } from "../../components/dishListItem";
-import { getDishes } from "../../api/dishes";
+import { DishAgent } from "../../api/dishes";
+import { usePromise } from "../../hooks/usePromise";
+import { useOnMount } from "../../hooks/extendedUseEffect";
+import { Loading } from "../../components/loading";
 
 export const DishesPage: FC = () => {
 
-    const [dishes, setDishes] = useState<Dish[]>([]);
+    const [getDishes, status, dishes] = usePromise(() => DishAgent.get());
 
     const [tab, setTab] = useState(DishTypes[0]);
 
     const [selected, setSelected] = useState<Dish | null>(null)
 
-    useEffect(() => {
-        getDishes().then(setDishes);
-    }, [])
+    useOnMount(getDishes);
 
     return <Box className={style.mainBox}>
         <Tabs
@@ -25,10 +26,12 @@ export const DishesPage: FC = () => {
             {Object.keys(DishTypes).filter(key => Object.keys(DishTypeLabels).includes(key)).map(type => <Tab label={DishTypeLabels[type as any]} value={type} key={type} />)}
         </Tabs>
         <Box className={style.viewer}>
-            <img className={style.picture} src="/logo512.png" />
-            <List className={style.dishList}>
-                {dishes.filter(dish => dish.type.toString() === tab).map(dish => <DishListItem dish={dish} active={dish === selected} key={dish.id} onClick={() => setSelected(dish)} />)}
-            </List>
+            {status === 'fulfilled' && <>
+                {selected?.img && <img className={style.picture} src={selected?.img} alt={selected?.title} />}
+                <List className={style.dishList}>
+                    {dishes!.filter(dish => dish.type.toString() === tab).map(dish => <DishListItem dish={dish} active={dish === selected} key={dish.id} onClick={() => setSelected(dish)} />)}
+                </List></>}
+            <Loading status={status} onRetry={getDishes}/>
         </Box>
     </Box>
 }

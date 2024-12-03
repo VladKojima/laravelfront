@@ -1,46 +1,59 @@
-import React, { FC, useEffect, useState } from 'react';
-import { TextField, Button, MenuItem, Container, Select, InputLabel, useTheme, Checkbox, Typography, Modal, Paper, CircularProgress } from '@mui/material';
-import style from './style.module.scss';
-import { getHalls } from '../../api/halls';
+import React, { FC, useState } from 'react';
+import { TextField, Button, MenuItem, Container, Select, InputLabel, useTheme, Checkbox, Typography, Modal, Paper } from '@mui/material';
 import { Event } from '../../models/event';
-import { getEvents } from '../../api/events';
 import { Hall } from '../../models/hall';
+import { HallAgent } from '../../api/halls';
+import { EventAgent } from '../../api/events';
+import { PageCenter } from '../../components/pageCenter';
+import { usePromise } from '../../hooks/usePromise';
+import { Loading } from '../../components/loading';
+import { useOnMount } from '../../hooks/extendedUseEffect';
+import { ReservationAgent } from '../../api/reservation';
+import { Reservation } from '../../models/reservation';
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('')
-  const [guestsCount, setGuestsCount] = useState<number | null>(1);
+  const [guestsCount, setGuestsCount] = useState<number>(1);
   const [fullHall, setFullHall] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-  };
-
   const theme = useTheme();
-
-  const [halls, setHalls] = useState<Hall[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
 
   const [open, setOpen] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [getInfo, status, value] = usePromise(() => {
+    return Promise.all([HallAgent.get(), EventAgent.get()]);
+  });
 
-  useEffect(() => {
-    getHalls().then(setHalls);
-    getEvents().then(setEvents);
-  }, []);
+  const [halls, events] = value !== undefined ? value : [[] as Hall[], [] as Event[]];
+
+  useOnMount(getInfo);
 
   function changeHall(hall: Hall) {
     setHall(hall);
     setGuestsCount(1);
   }
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    submit(new Reservation({
+      end_time: endTime,
+      guests_count: guestsCount,
+      reservation_date: startDate,
+      start_time: startTime,     
+    }))
+  };
+
+  const [submit, submitStatus] = usePromise(ReservationAgent.post)
+
   return (
-    <Container>
-      <form onSubmit={handleSubmit}>
+    <PageCenter>
+      <Loading status={status} onRetry={getInfo} />
+      {status === "fulfilled" && <form onSubmit={handleSubmit}>
         <InputLabel id="select-hall-label">Зал</InputLabel>
         <Select
           required
@@ -162,10 +175,10 @@ export const ReservationForm: FC = () => {
         <Button type="submit" variant="contained" color="primary">
           Забронировать
         </Button>
-      </form>
+      </form>}
       <Modal
         open={open}
-        onClose={() => setOpen(true)}
+        onClose={() => setOpen(false)}
         sx={{
           display: "flex",
           justifyContent: 'center',
@@ -173,11 +186,10 @@ export const ReservationForm: FC = () => {
         }}
       >
         <Paper sx={{ p: 5 }}>
-          <Typography>Идет проверка возможности бронирования</Typography>
-          {isLoading && <CircularProgress />}
+          <Loading status={submitStatus} />
           <Button onClick={() => setOpen(false)}>Закрыть</Button>
         </Paper>
       </Modal>
-    </Container>
+    </PageCenter>
   );
 }

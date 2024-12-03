@@ -1,12 +1,13 @@
-import { Box, Button, Container, TextField, Typography } from "@mui/material"
+import { Box, Button, TextField, Typography } from "@mui/material"
 import { FC, useState } from "react"
 import { Link } from "react-router-dom";
+import { PageCenter } from "../../components/pageCenter";
 
 export const LoginPage: FC = () => {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
 
-    return <Container sx={{ justifyItems: 'center' }}>
+    return <PageCenter>
         <Box sx={{ display: "flex", flexDirection: 'column', alignItems: 'stretch', gap: 2, width: 300 }}>
             <Typography sx={{ alignSelf: 'center' }}>Авторизация</Typography>
 
@@ -33,5 +34,5 @@ export const LoginPage: FC = () => {
                 Регистрация
             </Button>
         </Box>
-    </Container>
+    </PageCenter>
 }

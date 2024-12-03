@@ -1,7 +1,8 @@
-import { Box, Button, Container, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { FC, useState } from "react";
-import { Link } from "react-router-dom";
 import { User } from "../../models/user";
+import { UserAgent } from "../../api/user";
+import { PageCenter } from "../../components/pageCenter";
 
 export const RegisterPage: FC = () => {
     const [login, setLogin] = useState("");
@@ -12,15 +13,16 @@ export const RegisterPage: FC = () => {
     function handler(event: React.FormEvent) {
         event.preventDefault();
 
-        new User({
-            login,
-            password,
-            email,
-            phone
-        }).post();
+        UserAgent.save(
+            new User({
+                login,
+                password,
+                email,
+                phone
+            }));
     }
 
-    return <Container sx={{ justifyItems: 'center' }}>
+    return <PageCenter>
         <form onSubmit={handler}>
             <Box sx={{ display: "flex", flexDirection: 'column', alignItems: 'stretch', gap: 2, width: 300 }}>
                 <Typography sx={{ alignSelf: 'center' }}>Регистрация</Typography>
@@ -65,6 +67,6 @@ export const RegisterPage: FC = () => {
             </Box>
         </form>
 
-    </Container>
+    </PageCenter>
 
 }
