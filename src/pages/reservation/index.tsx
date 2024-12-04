@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { TextField, Button, MenuItem, Container, Select, InputLabel, useTheme, Checkbox, Typography, Modal, Paper } from '@mui/material';
+import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box } from '@mui/material';
 import { Event } from '../../models/event';
 import { Hall } from '../../models/hall';
 import { HallAgent } from '../../api/halls';
@@ -10,6 +10,7 @@ import { Loading } from '../../components/loading';
 import { useOnMount } from '../../hooks/extendedUseEffect';
 import { ReservationAgent } from '../../api/reservation';
 import { Reservation } from '../../models/reservation';
+import { OnImageSelect } from '../../components/onImageSelect';
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
@@ -19,10 +20,11 @@ export const ReservationForm: FC = () => {
   const [guestsCount, setGuestsCount] = useState<number>(1);
   const [fullHall, setFullHall] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
+  const [table, setTable] = useState<number | null>(null);
 
   const theme = useTheme();
 
-  const [open, setOpen] = useState(false);
+  const [openTableSelector, setOpenSelector] = useState(false);
 
   const [getInfo, status, value] = usePromise(() => {
     return Promise.all([HallAgent.get(), EventAgent.get()]);
@@ -44,7 +46,7 @@ export const ReservationForm: FC = () => {
       end_time: endTime,
       guests_count: guestsCount,
       reservation_date: startDate,
-      start_time: startTime,     
+      start_time: startTime,
     }))
   };
 
@@ -54,21 +56,43 @@ export const ReservationForm: FC = () => {
     <PageCenter>
       <Loading status={status} onRetry={getInfo} />
       {status === "fulfilled" && <form onSubmit={handleSubmit}>
-        <InputLabel id="select-hall-label">Зал</InputLabel>
-        <Select
-          required
-          labelId='select-hall-label'
-          variant='standard'
-          value={hall?.id ?? ''}
-          onChange={({ target: { value } }) => changeHall(halls.find(h => h.id === value)!)}
+        <Box
           sx={{
-            '.MuiSelect-icon': {
-              color: theme.palette.text.primary
-            }
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
           }}
         >
-          {halls.map(hall => <MenuItem key={hall.id} value={hall.id}>{hall.name}</MenuItem>)}
-        </Select>
+          <Typography>Зал</Typography>
+          <Select
+            required
+            variant='standard'
+            value={hall?.id ?? ''}
+            onChange={({ target: { value } }) => changeHall(halls.find(h => h.id === value)!)}
+            sx={{
+              '.MuiSelect-icon': {
+                color: theme.palette.text.primary
+              }
+            }}
+          >
+            {halls.map(hall => <MenuItem key={hall.id} value={hall.id}>{hall.name}</MenuItem>)}
+          </Select>
+        </Box>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Checkbox
+            value={fullHall}
+            onChange={({ target: { checked } }) => setFullHall(checked)}
+          />
+          <Typography>Бронировать весь зал</Typography>
+          <Button
+            onClick={() => setOpenSelector(true)}
+            disabled={!hall || fullHall}
+          >{table ? `Столик №${table}` : "Выбрать столик"}</Button>
+        </Box>
         <TextField
           required
           label="Дата"
@@ -91,7 +115,11 @@ export const ReservationForm: FC = () => {
             }
           }}
         />
-        <Container sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
           <Typography>Время</Typography>
           <TextField
             required
@@ -135,7 +163,7 @@ export const ReservationForm: FC = () => {
               }
             }}
           />
-        </Container>
+        </Box>
         <TextField
           label="Кол-во гостей"
           type="number"
@@ -151,12 +179,13 @@ export const ReservationForm: FC = () => {
           }}
           disabled={fullHall}
         />
-        <Container sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-          <Typography>Бронировать зал</Typography>
-          <Checkbox
-            value={fullHall}
-            onChange={({ target: { checked } }) => setFullHall(checked)}
-          />
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 2,
+          marginBottom: 2
+        }}>
           <Typography>Событие</Typography>
           <Select
             value={event?.id ?? ''}
@@ -171,25 +200,31 @@ export const ReservationForm: FC = () => {
             <MenuItem key={0} value={0}><Button>Убрать</Button></MenuItem>
             {events.map(event => <MenuItem key={event.id} value={event.id}>{event.name}</MenuItem>)}
           </Select>
-        </Container>
+        </Box>
         <Button type="submit" variant="contained" color="primary">
           Забронировать
         </Button>
       </form>}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        sx={{
-          display: "flex",
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <Paper sx={{ p: 5 }}>
-          <Loading status={submitStatus} />
-          <Button onClick={() => setOpen(false)}>Закрыть</Button>
-        </Paper>
-      </Modal>
+      {
+        hall && <Modal
+          open={openTableSelector}
+          onClose={() => setOpenSelector(false)}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <OnImageSelect
+            options={[] as { value: number, x: number, y: number }[]}
+            img={hall.schemeImg}
+            onSelect={(value) => {
+              setOpenSelector(false);
+              setTable(value)
+            }}
+          />
+        </Modal>
+      }
     </PageCenter>
   );
 }

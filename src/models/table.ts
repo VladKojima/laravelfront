@@ -4,6 +4,8 @@ export class Table {
     table_number: number;
     capacity: number;
     is_available: boolean;
+    x: number;
+    y: number;
 
     constructor(model: Table) {
         this.id = model.id;
@@ -11,5 +13,7 @@ export class Table {
         this.table_number = model.table_number;
         this.capacity = model.capacity;
         this.is_available = model.is_available;
+        this.x = model.x;
+        this.y = model.y;
     }
 }
