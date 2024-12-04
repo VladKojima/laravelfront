@@ -1,0 +1,18 @@
+.opt {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #F5FFFA;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.opt:hover {
+    background: #cd653f;
+}
+
+.img {
+    object-fit: contain;
+    height: 100%;
+    max-width: 100%;
+}
