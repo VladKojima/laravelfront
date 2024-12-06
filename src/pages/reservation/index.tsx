@@ -11,6 +11,7 @@ import { useOnMount } from '../../hooks/extendedUseEffect';
 import { ReservationAgent } from '../../api/reservation';
 import { Reservation } from '../../models/reservation';
 import { OnImageSelect } from '../../components/onImageSelect';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
@@ -21,6 +22,9 @@ export const ReservationForm: FC = () => {
   const [fullHall, setFullHall] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
   const [table, setTable] = useState<number | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [accept, setAccept] = useState(false);
 
   const theme = useTheme();
 
@@ -43,10 +47,14 @@ export const ReservationForm: FC = () => {
     event.preventDefault();
 
     submit(new Reservation({
+      hall_id: hall?.id,
+      table_id: table ?? undefined,
       end_time: endTime,
       guests_count: guestsCount,
       reservation_date: startDate,
       start_time: startTime,
+      guest_name: guestName,
+      guest_phone: guestPhone
     }))
   };
 
@@ -56,6 +64,27 @@ export const ReservationForm: FC = () => {
     <PageCenter>
       <Loading status={status} onRetry={getInfo} />
       {status === "fulfilled" && <form onSubmit={handleSubmit}>
+        {
+          <>
+            <TextField
+              required
+              label='Имя'
+              value={guestName}
+              onChange={({ target: { value } }) => setGuestName(value)}
+              fullWidth
+              margin='normal'
+            />
+
+            <TextField
+              required
+              label='Телефон'
+              value={guestPhone}
+              onChange={({ target: { value } }) => setGuestPhone(value)}
+              fullWidth
+              margin='normal'
+            />
+          </>
+        }
         <Box
           sx={{
             display: 'flex',
@@ -65,6 +94,7 @@ export const ReservationForm: FC = () => {
         >
           <Typography>Зал</Typography>
           <Select
+            aria-hidden={!halls.length}
             required
             variant='standard'
             value={hall?.id ?? ''}
@@ -93,75 +123,30 @@ export const ReservationForm: FC = () => {
             disabled={!hall || fullHall}
           >{table ? `Столик №${table}` : "Выбрать столик"}</Button>
         </Box>
-        <TextField
-          required
-          label="Дата"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          fullWidth
-          margin="normal"
-          sx={{
-            '.MuiInputBase-input[value=""]::-webkit-datetime-edit-fields-wrapper': {
-              display: 'none'
-            },
-            '.Mui-focused': {
-              '.MuiInputBase-input::-webkit-datetime-edit-fields-wrapper': {
-                display: 'block'
-              },
-            },
-            '.MuiInputBase-input::-webkit-calendar-picker-indicator': {
-              filter: 'invert()'
-            }
-          }}
-        />
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 2
         }}>
-          <Typography>Время</Typography>
-          <TextField
-            required
-            label="С"
-            type='time'
-            value={startTime}
-            fullWidth
-            onChange={({ target: { value } }) => setStartTime(value)}
-            sx={{
-              '.MuiInputBase-input[value=""]::-webkit-datetime-edit-fields-wrapper': {
-                display: 'none'
-              },
-              '.Mui-focused': {
-                '.MuiInputBase-input::-webkit-datetime-edit-fields-wrapper': {
-                  display: 'block'
-                },
-              },
-              '.MuiInputBase-input::-webkit-calendar-picker-indicator': {
-                filter: 'invert()'
-              }
-            }}
+          <DatePicker
+            label="Дата"
+            onChange={(value) => setStartDate(value?.format("YYYY-MM-DD") ?? "")}
+            disablePast
           />
-          <TextField
-            required
+          <Typography>Время</Typography>
+          <TimePicker
+            label="С"
+            views={['hours', 'minutes']}
+            timeSteps={{ minutes: 15 }}
+            defaultValue={null}
+            onChange={(value) => setStartTime(value?.format("hh:mm") ?? "")}
+          />
+          <TimePicker
             label="По"
-            type='time'
-            value={endTime}
-            fullWidth
-            onChange={({ target: { value } }) => setEndTime(value)}
-            sx={{
-              '.MuiInputBase-input[value=""]::-webkit-datetime-edit-fields-wrapper': {
-                display: 'none'
-              },
-              '.Mui-focused': {
-                '.MuiInputBase-input::-webkit-datetime-edit-fields-wrapper': {
-                  display: 'block'
-                },
-              },
-              '.MuiInputBase-input::-webkit-calendar-picker-indicator': {
-                filter: 'invert()'
-              }
-            }}
+            views={['hours', 'minutes']}
+            timeSteps={{ minutes: 15 }}
+            defaultValue={null}
+            onChange={(value) => setEndTime(value?.format("hh:mm") ?? "")}
           />
         </Box>
         <TextField
@@ -169,7 +154,6 @@ export const ReservationForm: FC = () => {
           type="number"
           value={guestsCount}
           onChange={(e) => setGuestsCount(+e.target.value)}
-          fullWidth
           margin="normal"
           slotProps={{
             htmlInput: {
@@ -179,7 +163,7 @@ export const ReservationForm: FC = () => {
           }}
           disabled={fullHall}
         />
-        <Box sx={{
+        {/* <Box sx={{
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
@@ -200,8 +184,21 @@ export const ReservationForm: FC = () => {
             <MenuItem key={0} value={0}><Button>Убрать</Button></MenuItem>
             {events.map(event => <MenuItem key={event.id} value={event.id}>{event.name}</MenuItem>)}
           </Select>
+        </Box> */}
+        <Box>
+          <Typography>Согласен на обработку персональных данных</Typography>
+          <Checkbox
+            checked={accept}
+            onChange={() => setAccept(!accept)}
+          />
         </Box>
-        <Button type="submit" variant="contained" color="primary">
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={!accept}
+        >
           Забронировать
         </Button>
       </form>}

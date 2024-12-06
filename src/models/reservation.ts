@@ -17,6 +17,8 @@ export class Reservation {
     state?: ReservationStates;
     guests_count: number;
     special_requests?: ReservationTypes;
+    guest_name?: string;
+    guest_phone?: string;
 
     constructor(model: Reservation) {
         this.id = model.id;
@@ -29,5 +31,7 @@ export class Reservation {
         this.state = model.state;
         this.guests_count = model.guests_count;
         this.special_requests = model.special_requests;
+        this.guest_name = model.guest_name;
+        this.guest_phone = model.guest_phone;
     }
 }
