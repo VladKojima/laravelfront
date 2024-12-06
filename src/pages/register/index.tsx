@@ -1,4 +1,4 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, TextField, Typography } from "@mui/material";
 import { FC, useState } from "react";
 import { User } from "../../models/user";
 import { UserAgent } from "../../api/user";
@@ -9,9 +9,12 @@ export const RegisterPage: FC = () => {
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [accept, setAccept] = useState(false);
 
     function handler(event: React.FormEvent) {
         event.preventDefault();
+        if (!accept)
+            return;
 
         UserAgent.save(
             new User({
@@ -61,7 +64,17 @@ export const RegisterPage: FC = () => {
                     onChange={({ target: { value } }) => setPhone(value)}
                 />
 
-                <Button variant="contained" type="submit">
+                <Box sx={{
+                    display: 'flex'
+                }}>
+                    <Checkbox
+                        checked={accept}
+                        onChange={() => setAccept(!accept)}
+                    />
+                    <Typography>Согласен на обработку персональных данных</Typography>
+                </Box>
+
+                <Button variant="contained" type="submit" disabled={!accept}>
                     Зарегистрироваться
                 </Button>
             </Box>
