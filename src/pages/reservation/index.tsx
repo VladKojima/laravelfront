@@ -12,6 +12,7 @@ import { ReservationAgent } from '../../api/reservation';
 import { Reservation } from '../../models/reservation';
 import { OnImageSelect } from '../../components/onImageSelect';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
@@ -25,6 +26,7 @@ export const ReservationForm: FC = () => {
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [accept, setAccept] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   const theme = useTheme();
 
@@ -36,6 +38,19 @@ export const ReservationForm: FC = () => {
 
   const [halls, events] = value !== undefined ? value : [[] as Hall[], [] as Event[]];
 
+  const isDateValid = !!startDate.length && (fullHall
+    ? dayjs(startDate).subtract(31, 'day').toISOString() < new Date().toISOString()
+    : dayjs(startDate).subtract(7, 'day').toISOString() < new Date().toISOString());
+
+  const isTimeValid = !!startTime.length && !!endTime.length && startTime < endTime;
+
+  const isValid = !!guestName.length
+    && guestPhone.length
+    && hall
+    && (fullHall || table)
+    && isDateValid
+    && isTimeValid
+
   useOnMount(getInfo);
 
   function changeHall(hall: Hall) {
@@ -46,19 +61,25 @@ export const ReservationForm: FC = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    submit(new Reservation({
-      hall_id: hall?.id,
-      table_id: table ?? undefined,
-      end_time: endTime,
-      guests_count: guestsCount,
-      reservation_date: startDate,
-      start_time: startTime,
-      guest_name: guestName,
-      guest_phone: guestPhone
-    }))
+    setChecked(true);
+
+    if (isValid)
+      submit(new Reservation({
+        hall_id: hall?.id,
+        table_id: table ?? undefined,
+        end_time: endTime,
+        guests_count: guestsCount,
+        reservation_date: startDate,
+        start_time: startTime,
+        guest_name: guestName,
+        guest_phone: guestPhone
+      }))
   };
 
-  const [submit, submitStatus] = usePromise(ReservationAgent.post)
+  const [submit, submitStatus] = usePromise(ReservationAgent.post);
+
+  const nameHelper = 'Введите имя, на которое забронирован столик';
+  const phoneHelper = 'Введите номер телефона для связи';
 
   return (
     <PageCenter>
@@ -67,21 +88,23 @@ export const ReservationForm: FC = () => {
         {
           <>
             <TextField
-              required
+              error={checked && checked && !guestName.length}
               label='Имя'
               value={guestName}
               onChange={({ target: { value } }) => setGuestName(value)}
               fullWidth
               margin='normal'
+              helperText={(checked && !guestName.length) ? nameHelper : ''}
             />
 
             <TextField
-              required
+              error={checked && checked && !guestPhone.length}
               label='Телефон'
               value={guestPhone}
               onChange={({ target: { value } }) => setGuestPhone(value)}
               fullWidth
               margin='normal'
+              helperText={(checked && !guestPhone.length) ? phoneHelper : ''}
             />
           </>
         }
@@ -95,7 +118,7 @@ export const ReservationForm: FC = () => {
           <Typography>Зал</Typography>
           <Select
             aria-hidden={!halls.length}
-            required
+            error={checked && !hall}
             variant='standard'
             value={hall?.id ?? ''}
             onChange={({ target: { value } }) => changeHall(halls.find(h => h.id === value)!)}
@@ -111,7 +134,8 @@ export const ReservationForm: FC = () => {
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1
+          gap: 1,
+          marginBottom: 2
         }}>
           <Checkbox
             value={fullHall}
@@ -121,6 +145,11 @@ export const ReservationForm: FC = () => {
           <Button
             onClick={() => setOpenSelector(true)}
             disabled={!hall || fullHall}
+            sx={{
+              color: (checked && !fullHall && !table)
+                ? theme.palette.error.main
+                : undefined
+            }}
           >{table ? `Столик №${table}` : "Выбрать столик"}</Button>
         </Box>
         <Box sx={{
@@ -132,23 +161,51 @@ export const ReservationForm: FC = () => {
             label="Дата"
             onChange={(value) => setStartDate(value?.format("YYYY-MM-DD") ?? "")}
             disablePast
+            minDate={dayjs(Date.now()).add(1, 'day')}
+            maxDate={
+              fullHall
+                ? dayjs(Date.now()).add(1, 'month')
+                : dayjs(Date.now()).add(7, 'day')
+            }
           />
           <Typography>Время</Typography>
           <TimePicker
             label="С"
             views={['hours', 'minutes']}
-            timeSteps={{ minutes: 15 }}
+            minutesStep={15}
+            skipDisabled
             defaultValue={null}
-            onChange={(value) => setStartTime(value?.format("hh:mm") ?? "")}
+            onChange={(value) => setStartTime(value?.format("HH:mm") ?? "")}
           />
           <TimePicker
             label="По"
             views={['hours', 'minutes']}
-            timeSteps={{ minutes: 15 }}
+            minutesStep={15}
+            skipDisabled
             defaultValue={null}
-            onChange={(value) => setEndTime(value?.format("hh:mm") ?? "")}
+            onChange={(value) => setEndTime(value?.format("HH:mm") ?? "")}
           />
         </Box>
+        {
+          checked && ((!startDate.length) ?
+            <Typography color={theme.palette.error.main}>
+              Выберите дату
+            </Typography>
+            : !isDateValid &&
+            <Typography color={theme.palette.error.main}>
+              Выберите другую дату
+            </Typography>)
+        }
+        {
+          checked && ((!startTime.length || !endTime.length) ?
+            <Typography color={theme.palette.error.main}>
+              Выберите промежуток времени
+            </Typography>
+            : !isTimeValid &&
+            <Typography color={theme.palette.error.main}>
+              Время начала должно быть раньше времени конца
+            </Typography>)
+        }
         <TextField
           label="Кол-во гостей"
           type="number"
@@ -197,7 +254,7 @@ export const ReservationForm: FC = () => {
           type="submit"
           variant="contained"
           color="primary"
-          disabled={!accept}
+          disabled={!accept || (checked && !isValid)}
         >
           Забронировать
         </Button>
@@ -222,6 +279,6 @@ export const ReservationForm: FC = () => {
           />
         </Modal>
       }
-    </PageCenter>
+    </PageCenter >
   );
 }
