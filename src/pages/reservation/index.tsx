@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box } from '@mui/material';
+import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box, CircularProgress } from '@mui/material';
 import { Event } from '../../models/event';
 import { Hall } from '../../models/hall';
 import { HallAgent } from '../../api/halls';
@@ -95,6 +95,7 @@ export const ReservationForm: FC = () => {
               fullWidth
               margin='normal'
               helperText={(checked && !guestName.length) ? nameHelper : ''}
+              disabled={submitStatus === 'pending'}
             />
 
             <TextField
@@ -105,6 +106,7 @@ export const ReservationForm: FC = () => {
               fullWidth
               margin='normal'
               helperText={(checked && !guestPhone.length) ? phoneHelper : ''}
+              disabled={submitStatus === 'pending'}
             />
           </>
         }
@@ -127,6 +129,7 @@ export const ReservationForm: FC = () => {
                 color: theme.palette.text.primary
               }
             }}
+            disabled={submitStatus === 'pending'}
           >
             {halls.map(hall => <MenuItem key={hall.id} value={hall.id}>{hall.name}</MenuItem>)}
           </Select>
@@ -140,11 +143,12 @@ export const ReservationForm: FC = () => {
           <Checkbox
             value={fullHall}
             onChange={({ target: { checked } }) => setFullHall(checked)}
+            disabled={submitStatus === 'pending'}
           />
           <Typography>Бронировать весь зал</Typography>
           <Button
             onClick={() => setOpenSelector(true)}
-            disabled={!hall || fullHall}
+            disabled={!hall || fullHall || submitStatus === 'pending'}
             sx={{
               color: (checked && !fullHall && !table)
                 ? theme.palette.error.main
@@ -167,6 +171,7 @@ export const ReservationForm: FC = () => {
                 ? dayjs(Date.now()).add(1, 'month')
                 : dayjs(Date.now()).add(7, 'day')
             }
+            disabled={submitStatus === 'pending'}
           />
           <Typography>Время</Typography>
           <TimePicker
@@ -176,6 +181,7 @@ export const ReservationForm: FC = () => {
             skipDisabled
             defaultValue={null}
             onChange={(value) => setStartTime(value?.format("HH:mm") ?? "")}
+            disabled={submitStatus === 'pending'}
           />
           <TimePicker
             label="По"
@@ -184,6 +190,7 @@ export const ReservationForm: FC = () => {
             skipDisabled
             defaultValue={null}
             onChange={(value) => setEndTime(value?.format("HH:mm") ?? "")}
+            disabled={submitStatus === 'pending'}
           />
         </Box>
         {
@@ -218,7 +225,7 @@ export const ReservationForm: FC = () => {
               max: hall ? hall.capacity : undefined
             }
           }}
-          disabled={fullHall}
+          disabled={fullHall || submitStatus === 'pending'}
         />
         {/* <Box sx={{
           display: 'flex',
@@ -242,22 +249,61 @@ export const ReservationForm: FC = () => {
             {events.map(event => <MenuItem key={event.id} value={event.id}>{event.name}</MenuItem>)}
           </Select>
         </Box> */}
-        <Box>
-          <Typography>Согласен на обработку персональных данных</Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
           <Checkbox
             checked={accept}
             onChange={() => setAccept(!accept)}
+            disabled={submitStatus === 'pending'}
           />
+          <Typography>
+            Согласен на обработку персональных данных
+          </Typography>
         </Box>
 
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center'
+          }}
+        >
         <Button
           type="submit"
           variant="contained"
           color="primary"
-          disabled={!accept || (checked && !isValid)}
+            disabled={!accept || (checked && !isValid) || submitStatus === 'pending'}
         >
           Забронировать
         </Button>
+
+          {
+            submitStatus === 'pending' && <>
+              <Typography>
+                Идет проверка возможности брони...
+              </Typography>
+              <CircularProgress />
+            </>
+          }
+
+          {
+            submitStatus === 'fulfilled' && <Typography>
+              Заявка на бронирование успешно создана. Будет выполнен переход на страницу оплаты.
+            </Typography>
+          }
+
+          {
+            submitStatus === 'rejected' && <Typography>
+              Произошла ошибка. Повторите попытку.
+            </Typography>
+          }
+
+        </Box>
+
       </form>}
       {
         hall && <Modal
