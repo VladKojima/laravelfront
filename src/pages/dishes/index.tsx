@@ -23,15 +23,37 @@ export const DishesPage: FC = () => {
             value={tab}
             onChange={(_, value) => setTab(value)}
         >
-            {Object.keys(DishTypes).filter(key => Object.keys(DishTypeLabels).includes(key)).map(type => <Tab label={DishTypeLabels[type as any]} value={type} key={type} />)}
+            {Object.keys(DishTypes)
+                .filter(key => Object.keys(DishTypeLabels).includes(key))
+                .map(type => <Tab label={DishTypeLabels[type as any]} value={type} key={type} />)
+            }
         </Tabs>
         <Box className={style.viewer}>
             {status === 'fulfilled' && <>
-                {selected?.img && <img className={style.picture} src={selected?.img} alt={selected?.title} />}
+                <Box
+                    sx={{
+                        width: '50%',
+                        height: '25%',
+                    }}
+                >
+                    {selected?.img && <img
+                        className={style.picture}
+                        src={selected?.img}
+                        alt={selected?.title}
+                    />}
+                </Box>
+
                 <List className={style.dishList}>
-                    {dishes!.filter(dish => dish.type.toString() === tab).map(dish => <DishListItem dish={dish} active={dish === selected} key={dish.id} onClick={() => setSelected(dish)} />)}
-                </List></>}
-            <Loading status={status} onRetry={getDishes}/>
+                    {dishes!.filter(dish => dish.type.toString() === tab)
+                        .map(dish => <DishListItem
+                            dish={dish}
+                            active={dish === selected}
+                            key={dish.id}
+                            onClick={() => setSelected(dish)}
+                        />)}
+                </List>
+            </>}
+            <Loading status={status} onRetry={getDishes} />
         </Box>
     </Box>
 }
