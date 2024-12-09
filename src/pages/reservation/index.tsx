@@ -13,6 +13,8 @@ import { Reservation } from '../../models/reservation';
 import { OnImageSelect } from '../../components/onImageSelect';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
+import { Table } from '../../models/table';
+import { TableAgent } from '../../api/tables';
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
@@ -33,10 +35,10 @@ export const ReservationForm: FC = () => {
   const [openTableSelector, setOpenSelector] = useState(false);
 
   const [getInfo, status, value] = usePromise(() => {
-    return Promise.all([HallAgent.get(), EventAgent.get()]);
+    return Promise.all([HallAgent.get(), EventAgent.get(), TableAgent.get()]);
   });
 
-  const [halls, events] = value !== undefined ? value : [[] as Hall[], [] as Event[]];
+  const [halls, events, tables] = value !== undefined ? value : [[] as Hall[], [] as Event[], [] as Table[]];
 
   const isDateValid = !!startDate.length && (fullHall
     ? dayjs(startDate).subtract(31, 'day').toISOString() < new Date().toISOString()
@@ -56,6 +58,7 @@ export const ReservationForm: FC = () => {
   function changeHall(hall: Hall) {
     setHall(hall);
     setGuestsCount(1);
+    setTable(null);
   }
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -272,14 +275,14 @@ export const ReservationForm: FC = () => {
             alignItems: 'center'
           }}
         >
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
             disabled={!accept || (checked && !isValid) || submitStatus === 'pending'}
-        >
-          Забронировать
-        </Button>
+          >
+            Забронировать
+          </Button>
 
           {
             submitStatus === 'pending' && <>
@@ -316,7 +319,15 @@ export const ReservationForm: FC = () => {
           }}
         >
           <OnImageSelect
-            options={[] as { value: number, x: number, y: number }[]}
+            options={tables
+              .filter(table => table.hall_id === hall.id)
+              .map(table => ({
+                x: table.x,
+                y: table.y,
+                label: table.table_number.toString(),
+                value: table.id
+              }))
+            }
             img={hall.schemeImg}
             onSelect={(value) => {
               setOpenSelector(false);
