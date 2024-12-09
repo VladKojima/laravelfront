@@ -15,12 +15,13 @@ export const HallsPage: FC = () => {
     const theme = useTheme();
 
     return <Container>
-        <PageCenter><Loading status={status} onRetry={getHalls} /></PageCenter>
+        <PageCenter><Loading status={status} onRetry={getHalls} />
         {status === 'fulfilled' &&
             halls!.map(hall => <Box key={hall.id} sx={{
                 border: `dashed 2px ${theme.palette.primary.main}`,
                 padding: 1,
-                marginBottom: 1
+                    marginBottom: 1,
+                    width: '100%'
             }}>
                 <img src={hall.img} className={style.avatar} alt={hall.name} />
 
@@ -36,5 +37,6 @@ export const HallsPage: FC = () => {
                 >{hall.description}</Typography>
             </Box>)
         }
+        </PageCenter>
     </Container>
 }
