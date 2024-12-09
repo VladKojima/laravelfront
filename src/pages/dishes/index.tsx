@@ -18,20 +18,30 @@ export const DishesPage: FC = () => {
 
     useOnMount(getDishes);
 
+    function changeTab(tab: string) {
+        setSelected(null);
+        setTab(tab);
+    }
+
     return <Box className={style.mainBox}>
         <Tabs
             value={tab}
-            onChange={(_, value) => setTab(value)}
+            onChange={(_, value) => changeTab(value)}
         >
             {Object.keys(DishTypes).filter(key => Object.keys(DishTypeLabels).includes(key)).map(type => <Tab label={DishTypeLabels[type as any]} value={type} key={type} />)}
         </Tabs>
         <Box className={style.viewer}>
             {status === 'fulfilled' && <>
-                {selected?.img && <img className={style.picture} src={selected?.img} alt={selected?.title} />}
+                <Box sx={{
+                    width: '50%',
+                    height: '25%'
+                }}>
+                    {selected?.image && <img className={style.picture} src={selected?.image} alt={selected?.title} />}
+                </Box>
                 <List className={style.dishList}>
                     {dishes!.filter(dish => dish.type.toString() === tab).map(dish => <DishListItem dish={dish} active={dish === selected} key={dish.id} onClick={() => setSelected(dish)} />)}
                 </List></>}
-            <Loading status={status} onRetry={getDishes}/>
+            <Loading status={status} onRetry={getDishes} />
         </Box>
     </Box>
 }

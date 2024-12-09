@@ -1,18 +1,18 @@
 export enum DishTypes {
-    SALAT, SNACK, HOT_MEAL, DESSERT, DRINK
+    Salads, Snacks, Hot, Desserts, Drinks
 }
 
 export enum DishTypeLabels {
-    SALAT = "Салаты" as any,
-    SNACK = "Закуски" as any,
-    HOT_MEAL = "Горячие блюда" as any,
-    DESSERT = "Десерт" as any,
-    DRINK = "Напитки" as any
+    Salads = "Салаты" as any,
+    Snacks = "Закуски" as any,
+    Hot = "Горячие блюда" as any,
+    Desserts = "Десерт" as any,
+    Drinks = "Напитки" as any
 }
 
 export class Dish {
     id: number;
-    img: string;
+    image: string;
     title: string;
     weight: number;
     cost: number;
@@ -20,7 +20,7 @@ export class Dish {
 
     constructor(model: any) {
         this.id = model.id;
-        this.img = model.img;
+        this.image = model.image;
         this.title = model.title;
         this.weight = model.weight;
         this.cost = model.cost;
