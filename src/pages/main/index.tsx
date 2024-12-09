@@ -17,6 +17,9 @@ export const MainPage: FC = () => {
         <Loading status={status} onRetry={getInfo} />
         {
             status === "fulfilled" && <>
+                <Typography sx={{
+                    fontWeight: 'bold'
+                }}>{info?.title}</Typography>
                 <img src={info?.image_url} className={style.avatar} alt="Картинка кафе" />
                 <Typography>{info?.description}</Typography>
                 <Button component={Link} to="/dishes">Посмотреть блюда</Button>
