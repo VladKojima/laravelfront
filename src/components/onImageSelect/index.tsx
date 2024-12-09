@@ -54,6 +54,6 @@ export function OnImageSelect<T extends React.Key>({ img, options, onSelect }: I
                 left: `${(rect?.left ?? 0) + left + option.x * scale}px`,
             }}
             onClick={() => onSelect?.(option.value)}
-        />)}
+        >{option.label}</div>)}
     </Container>
 }
