@@ -318,22 +318,27 @@ export const ReservationForm: FC = () => {
             alignItems: 'center'
           }}
         >
-          <OnImageSelect
-            options={tables
-              .filter(table => table.hall_id === hall.id)
-              .map(table => ({
-                x: table.x,
-                y: table.y,
-                label: table.table_number.toString(),
-                value: table.id
-              }))
-            }
-            img={hall.schemeImg}
-            onSelect={(value) => {
-              setOpenSelector(false);
-              setTable(value)
-            }}
-          />
+          <Box sx={{
+            width:'80%',
+            height:'80%'
+          }}>
+            <OnImageSelect
+              options={tables
+                .filter(table => table.hall_id === hall.id)
+                .map(table => ({
+                  x: table.x,
+                  y: table.y,
+                  label: table.table_number.toString(),
+                  value: table.id
+                }))
+              }
+              img={hall.schemeImg}
+              onSelect={(value) => {
+                setOpenSelector(false);
+                setTable(value)
+              }}
+            />
+          </Box>
         </Modal>
       }
     </PageCenter >
