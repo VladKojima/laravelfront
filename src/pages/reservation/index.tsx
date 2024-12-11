@@ -46,12 +46,17 @@ export const ReservationForm: FC = () => {
 
   const isTimeValid = !!startTime.length && !!endTime.length && startTime < endTime;
 
+  const isCountValid = fullHall || !table
+    || guestsCount <= tables.find(t => t.id === table)!.capacity
+    && guestsCount > 0;
+
   const isValid = !!guestName.length
     && guestPhone.length
     && hall
     && (fullHall || table)
     && isDateValid
     && isTimeValid
+    && isCountValid;
 
   useOnMount(getInfo);
 
@@ -217,6 +222,8 @@ export const ReservationForm: FC = () => {
             </Typography>)
         }
         <TextField
+          error={checked && !isCountValid}
+          helperText={checked && !isCountValid && 'Кол-во гостей должно умещаться за столиком'}
           label="Кол-во гостей"
           type="number"
           value={guestsCount}
@@ -225,7 +232,7 @@ export const ReservationForm: FC = () => {
           slotProps={{
             htmlInput: {
               min: 1,
-              max: hall ? hall.capacity : undefined
+              max: table ? tables.find(t => t.id === table)!.capacity : undefined
             }
           }}
           disabled={fullHall || submitStatus === 'pending'}
