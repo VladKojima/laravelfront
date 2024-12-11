@@ -3,15 +3,15 @@ import { FC } from "react"
 import { Dish } from "../../models/dish"
 
 interface IProps {
-    dish: Dish;
+    value: Dish;
     active?: boolean;
     onClick?: () => void;
 }
 
-export const DishListItem: FC<IProps> = ({ dish, active, onClick }) => {
+export const DishListItem: FC<IProps> = ({ value, active, onClick }) => {
     const theme = useTheme()
 
-    return <ListItem key={dish.id}>
+    return <ListItem key={value.id}>
         <Button
             variant="outlined"
             sx={{
@@ -19,7 +19,9 @@ export const DishListItem: FC<IProps> = ({ dish, active, onClick }) => {
             }}
             onClick={onClick}
         >
-            <Typography>{dish.title}<br />{dish.cost} руб / {dish.weight}</Typography>
+            <Typography sx={{
+                wordBreak: 'break-all'
+            }} >{value.title}<br />{value.cost} руб / {value.weight}</Typography>
         </Button>
     </ListItem>
 }

@@ -5,10 +5,10 @@
     height: 100%;
 }
 
-.dishList {
+.list {
     height: 40vh;
     overflow-y: scroll;
-    width: 40%;
+    width: 50%;
 }
 
 .viewer {
