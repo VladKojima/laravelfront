@@ -157,7 +157,7 @@ export const ReservationForm: FC = () => {
                 ? theme.palette.error.main
                 : undefined
             }}
-          >{table ? `Столик №${table}` : "Выбрать столик"}</Button>
+          >{table ? `Столик №${tables.find(t => t.id === table)?.table_number}` : "Выбрать столик"}</Button>
         </Box>
         <Box sx={{
           display: 'flex',
@@ -319,12 +319,12 @@ export const ReservationForm: FC = () => {
           }}
         >
           <Box sx={{
-            width:'80%',
-            height:'80%'
+            width: '80%',
+            height: '80%'
           }}>
             <OnImageSelect
               options={tables
-                .filter(table => table.hall_id === hall.id)
+                .filter(table => table.is_available && table.hall_id === hall.id)
                 .map(table => ({
                   x: table.x,
                   y: table.y,
@@ -337,6 +337,16 @@ export const ReservationForm: FC = () => {
                 setOpenSelector(false);
                 setTable(value)
               }}
+              PopperComponent={({ option }) => <Box
+                sx={{
+                  backgroundColor: theme.palette.text.primary,
+                  padding: 2,
+                  borderRadius: 5
+                }}
+              >
+                <Typography>Столик №{option.label}</Typography>
+                <Typography>Вместимость: {tables.find(t => t.id === option.value)?.capacity}</Typography>
+              </Box>}
             />
           </Box>
         </Modal>

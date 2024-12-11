@@ -16,27 +16,33 @@ export const HallsPage: FC = () => {
 
     return <Container>
         <PageCenter><Loading status={status} onRetry={getHalls} />
-        {status === 'fulfilled' &&
-            halls!.map(hall => <Box key={hall.id} sx={{
-                border: `dashed 2px ${theme.palette.primary.main}`,
-                padding: 1,
+            {status === 'fulfilled' &&
+                halls!.map(hall => <Box key={hall.id} sx={{
+                    border: `dashed 2px ${theme.palette.primary.main}`,
+                    padding: 1,
                     marginBottom: 1,
                     width: '100%'
-            }}>
-                <img src={hall.img} className={style.avatar} alt={hall.name} />
+                }}>
+                    <img src={hall.img} className={style.avatar} alt={hall.name} />
 
-                <Typography sx={{
-                    justifySelf: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '2em'
-                }}>{hall.name}</Typography>
+                    <Typography sx={{
+                        justifySelf: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '2em'
+                    }}>{hall.name}</Typography>
 
-                <Typography sx={{
-                    justifySelf: 'center'
-                }}
-                >{hall.description}</Typography>
-            </Box>)
-        }
+                    <Typography sx={{
+                        justifySelf: 'center'
+                    }}
+                    >{hall.description}</Typography>
+
+                    <Typography sx={{
+                        justifySelf: 'center'
+                    }}>
+                        Вместимость: {hall.capacity} чел.
+                    </Typography>
+                </Box>)
+            }
         </PageCenter>
     </Container>
 }

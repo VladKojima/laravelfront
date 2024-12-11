@@ -1,5 +1,5 @@
-import { Container } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { Container, Popper } from "@mui/material";
+import { FC, useEffect, useRef, useState } from "react";
 import style from "./style.module.css"
 
 interface IOption<T> {
@@ -9,13 +9,18 @@ interface IOption<T> {
     value: T;
 }
 
+interface IOptionsProps<T> {
+    option: IOption<T>;
+}
+
 interface IProps<T> {
     img: string;
     options: IOption<T>[];
     onSelect?: (value: T) => void;
+    PopperComponent?: FC<IOptionsProps<T>>;
 }
 
-export function OnImageSelect<T extends React.Key>({ img, options, onSelect }: IProps<T>) {
+export function OnImageSelect<T extends React.Key>({ img, options, onSelect, PopperComponent }: IProps<T>) {
     const imgRef = useRef<HTMLImageElement>(null);
 
     const [rect, setRect] = useState(imgRef.current?.getBoundingClientRect());
@@ -36,6 +41,9 @@ export function OnImageSelect<T extends React.Key>({ img, options, onSelect }: I
 
         return () => window.removeEventListener('resize', handler);
     }, [])
+
+    const [popperOn, setPopperOn] = useState<HTMLElement | null>(null);
+    const [poppedOption, setPoppedOption] = useState<IOption<T> | null>(null);
 
     return <Container sx={{
         display: 'flex',
@@ -60,6 +68,25 @@ export function OnImageSelect<T extends React.Key>({ img, options, onSelect }: I
                 left: `${(rect?.left ?? 0) + option.x * scale}px`,
             }}
             onClick={() => onSelect?.(option.value)}
+            onMouseEnter={({ currentTarget }) => {
+                setPopperOn(currentTarget);
+                setPoppedOption(option);
+            }}
+            onMouseLeave={() => {
+                setPopperOn(null);
+                setPoppedOption(null);
+            }}
         >{option.label}</div>)}
+
+        {PopperComponent && <Popper
+            open={!!popperOn}
+            anchorEl={popperOn}
+            placement="right"
+            sx={{
+                zIndex: 1500,
+            }}
+        >
+            <PopperComponent option={poppedOption!} />
+        </Popper>}
     </Container>
 }
