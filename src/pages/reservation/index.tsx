@@ -1,9 +1,9 @@
 import React, { FC, useState } from 'react';
-import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box, CircularProgress } from '@mui/material';
-import { Event } from '../../models/event';
+import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box, CircularProgress, List, ListItem } from '@mui/material';
+// import { Event } from '../../models/event';
 import { Hall } from '../../models/hall';
 import { HallAgent } from '../../api/halls';
-import { EventAgent } from '../../api/events';
+// import { EventAgent } from '../../api/events';
 import { PageCenter } from '../../components/pageCenter';
 import { usePromise } from '../../hooks/usePromise';
 import { Loading } from '../../components/loading';
@@ -15,6 +15,17 @@ import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { Table } from '../../models/table';
 import { TableAgent } from '../../api/tables';
+import { DishAgent } from '../../api/dishes';
+import { Dish, DishTypeLabels, DishTypes } from '../../models/dish';
+import { MenuSelector } from '../../components/menuSelector';
+import { DishListItem } from '../../components/dishListItem';
+import { Page } from '../../components/page';
+import { Delete } from '@mui/icons-material';
+
+interface ICartEntry {
+  dish: Dish;
+  count: number;
+}
 
 export const ReservationForm: FC = () => {
   const [hall, setHall] = useState<Hall | null>(null);
@@ -23,7 +34,7 @@ export const ReservationForm: FC = () => {
   const [endTime, setEndTime] = useState('')
   const [guestsCount, setGuestsCount] = useState<number>(1);
   const [fullHall, setFullHall] = useState(false);
-  const [event, setEvent] = useState<Event | null>(null);
+  // const [event, setEvent] = useState<Event | null>(null);
   const [table, setTable] = useState<number | null>(null);
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
@@ -33,12 +44,15 @@ export const ReservationForm: FC = () => {
   const theme = useTheme();
 
   const [openTableSelector, setOpenSelector] = useState(false);
+  const [openDishSelector, setOpenDishSelector] = useState(true);
+
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
   const [getInfo, status, value] = usePromise(() => {
-    return Promise.all([HallAgent.get(), EventAgent.get(), TableAgent.get()]);
+    return Promise.all([HallAgent.get(), /*EventAgent.get(),*/ TableAgent.get(), DishAgent.get()]);
   });
 
-  const [halls, events, tables] = value !== undefined ? value : [[] as Hall[], [] as Event[], [] as Table[]];
+  const [halls, /*events,*/ tables, dishes] = value !== undefined ? value : [[] as Hall[], /*[] as Event[],*/[] as Table[], [] as Dish[]];
 
   const isDateValid = !!startDate.length && (fullHall
     ? dayjs(startDate).subtract(31, 'day').toISOString() < new Date().toISOString()
@@ -88,6 +102,63 @@ export const ReservationForm: FC = () => {
 
   const nameHelper = 'Введите имя, на которое забронирован столик';
   const phoneHelper = 'Введите номер телефона для связи';
+
+  const types = Object.keys(DishTypes)
+    .filter(k => isNaN(k as any))
+    .map(k => ({
+      value: k,
+      label: DishTypeLabels[k as any]
+    }));
+
+  const [dishCount, setDishCount] = useState(1);
+
+  const [cart, setCart] = useState<ICartEntry[]>([]);
+
+  function handleDishAdd() {
+    if (cart.find(e => e.dish.id === selectedDish!.id)) {
+      setCart(cart.map(e => {
+        if (e.dish.id !== selectedDish!.id) return e;
+
+        return {
+          ...e,
+          count: e.count + dishCount
+        }
+      }));
+    }
+    else {
+      setCart([...cart, { dish: selectedDish!, count: dishCount }]);
+    }
+
+    setDishCount(1);
+
+    setSelectedDish(null);
+  }
+
+  function handleInc(entry: ICartEntry) {
+    setCart(cart.map(e => {
+      if (e.dish.id !== entry.dish.id) return e;
+      return {
+        ...e,
+        count: e.count + 1
+      };
+    }))
+  }
+
+  function handleDec(entry: ICartEntry) {
+    if (entry.count === 1) return;
+
+    setCart(cart.map(e => {
+      if (e.dish.id !== entry.dish.id) return e;
+      return {
+        ...e,
+        count: e.count - 1
+      };
+    }))
+  }
+
+  function handleDel(entry: ICartEntry) {
+    setCart(cart.filter(e => e.dish.id !== entry.dish.id));
+  }
 
   return (
     <PageCenter>
@@ -154,15 +225,27 @@ export const ReservationForm: FC = () => {
             disabled={submitStatus === 'pending'}
           />
           <Typography>Бронировать весь зал</Typography>
-          <Button
-            onClick={() => setOpenSelector(true)}
-            disabled={!hall || fullHall || submitStatus === 'pending'}
-            sx={{
-              color: (checked && !fullHall && !table)
-                ? theme.palette.error.main
-                : undefined
-            }}
-          >{table ? `Столик №${tables.find(t => t.id === table)?.table_number}` : "Выбрать столик"}</Button>
+          {fullHall
+            ? <Button
+              onClick={() => setOpenDishSelector(true)}
+              disabled={!hall || submitStatus === 'pending'}
+              sx={{
+                color: (checked && !fullHall && !table)
+                  ? theme.palette.error.main
+                  : undefined
+              }}
+            >Выбрать блюда</Button>
+            : <Button
+              onClick={() => setOpenSelector(true)}
+              disabled={!hall || submitStatus === 'pending'}
+              sx={{
+                color: (checked && !fullHall && !table)
+                  ? theme.palette.error.main
+                  : undefined
+              }}
+            >{table ? `Столик №${tables.find(t => t.id === table)?.table_number}` : "Выбрать столик"}</Button>
+          }
+
         </Box>
         <Box sx={{
           display: 'flex',
@@ -357,6 +440,153 @@ export const ReservationForm: FC = () => {
             />
           </Box>
         </Modal>
+      }
+
+      {
+        fullHall || true && <Modal
+          open={openDishSelector}
+          onClose={() => setOpenDishSelector(false)}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <Box
+            sx={{
+              width: '80%'
+            }}
+          >
+            <Page>
+              <Box
+                sx={{
+                  height: '50vh'
+                }}
+              >
+
+                <MenuSelector
+                  keygen={(dish) => dish.id}
+                  OptionComponent={DishListItem}
+                  types={types}
+                  options={dishes!.map(dish => ({
+                    value: dish,
+                    type: types.find(t => t.value === dish.type as any)!,
+                    image: dish.image
+                  }))
+                  }
+                  onClick={setSelectedDish}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex'
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    alignItems: 'center',
+                    flexDirection: 'column',
+                    width: "50%"
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      wordBreak: 'break-all'
+                    }}
+                  >Выбранное блюдо: {selectedDish?.title}</Typography>
+                  <TextField
+                    label="Кол-во"
+                    value={dishCount}
+                    type='number'
+                    onChange={({ target: { value } }) => setDishCount(+value)}
+                    slotProps={{
+                      htmlInput: {
+                        min: 1
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleDishAdd}
+                    disabled={!selectedDish || dishCount < 1}
+                  >Добавить</Button>
+                </Box>
+
+                <List
+                  sx={{
+                    width: '60%',
+                    height: '30vh',
+                    overflowY: 'scroll',
+                  }}
+                >
+                  {cart.map(e => <ListItem
+                    key={e.dish.id}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        wordBreak: 'break-all',
+                      }}
+                    >{e.dish.title}</Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+
+                      }}
+                    >
+                      <Button
+                        sx={{
+                          borderRadius: '50%'
+                        }}
+                        onClick={() => handleDec(e)}
+                      >-</Button>
+                      <Typography>
+                        {e.count}
+                      </Typography>
+                      <Button
+                        sx={{
+                          borderRadius: '50%'
+                        }}
+                        onClick={() => handleInc(e)}
+                      >+</Button>
+                      <Button
+                        sx={{
+                          borderRadius: '50%'
+                        }}
+                        onClick={() => handleDel(e)}
+                      >
+                        <Delete />
+                      </Button>
+                    </Box>
+
+                  </ListItem>)}
+                </List>
+
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center'
+                }}
+              >
+                <Typography>Итого {cart
+                  .map(e => e.dish.cost * e.count)
+                  .reduce((sum, dish) => sum + dish, 0)} руб.</Typography>
+                <Button
+                  onClick={() => setOpenDishSelector(false)}
+                >Ок</Button>
+              </Box>
+            </Page>
+          </Box>
+        </Modal >
       }
     </PageCenter >
   );
