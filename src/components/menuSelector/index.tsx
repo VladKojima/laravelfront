@@ -49,7 +49,8 @@ export function MenuSelector<T>({ options, types, OptionComponent, keygen, onCli
             <>
                 <Box sx={{
                     width: '50%',
-                    height: '25%'
+                    height: '85%',
+                    // overflowY: 'scroll'
                 }}>
                     {selected?.image && <img className={style.picture} src={selected?.image} />}
                 </Box>
