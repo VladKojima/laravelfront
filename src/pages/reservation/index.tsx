@@ -44,7 +44,7 @@ export const ReservationForm: FC = () => {
   const theme = useTheme();
 
   const [openTableSelector, setOpenSelector] = useState(false);
-  const [openDishSelector, setOpenDishSelector] = useState(true);
+  const [openDishSelector, setOpenDishSelector] = useState(false);
 
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
@@ -442,152 +442,150 @@ export const ReservationForm: FC = () => {
         </Modal>
       }
 
-      {
-        fullHall || true && <Modal
-          open={openDishSelector}
-          onClose={() => setOpenDishSelector(false)}
+      <Modal
+        open={openDishSelector}
+        onClose={() => setOpenDishSelector(false)}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
+            width: '80%'
           }}
         >
-          <Box
-            sx={{
-              width: '80%'
-            }}
-          >
-            <Page>
+          <Page>
+            <Box
+              sx={{
+                height: '50vh'
+              }}
+            >
+
+              <MenuSelector
+                keygen={(dish) => dish.id}
+                OptionComponent={DishListItem}
+                types={types}
+                options={dishes!.map(dish => ({
+                  value: dish,
+                  type: types.find(t => t.value === dish.type as any)!,
+                  image: dish.image
+                }))
+                }
+                onClick={setSelectedDish}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex'
+              }}
+            >
               <Box
                 sx={{
-                  height: '50vh'
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  flexDirection: 'column',
+                  width: "50%"
                 }}
               >
-
-                <MenuSelector
-                  keygen={(dish) => dish.id}
-                  OptionComponent={DishListItem}
-                  types={types}
-                  options={dishes!.map(dish => ({
-                    value: dish,
-                    type: types.find(t => t.value === dish.type as any)!,
-                    image: dish.image
-                  }))
-                  }
-                  onClick={setSelectedDish}
+                <Typography
+                  sx={{
+                    wordBreak: 'break-all'
+                  }}
+                >Выбранное блюдо: {selectedDish?.title}</Typography>
+                <TextField
+                  label="Кол-во"
+                  value={dishCount}
+                  type='number'
+                  onChange={({ target: { value } }) => setDishCount(+value)}
+                  slotProps={{
+                    htmlInput: {
+                      min: 1
+                    }
+                  }}
                 />
+                <Button
+                  onClick={handleDishAdd}
+                  disabled={!selectedDish || dishCount < 1}
+                >Добавить</Button>
               </Box>
 
-              <Box
+              <List
                 sx={{
-                  display: 'flex'
+                  width: '60%',
+                  height: '30vh',
+                  overflowY: 'scroll',
                 }}
               >
-                <Box
+                {cart.map(e => <ListItem
+                  key={e.dish.id}
                   sx={{
                     display: 'flex',
-                    gap: 1,
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                    width: "50%"
+                    justifyContent: 'space-between'
                   }}
                 >
                   <Typography
                     sx={{
-                      wordBreak: 'break-all'
+                      wordBreak: 'break-all',
                     }}
-                  >Выбранное блюдо: {selectedDish?.title}</Typography>
-                  <TextField
-                    label="Кол-во"
-                    value={dishCount}
-                    type='number'
-                    onChange={({ target: { value } }) => setDishCount(+value)}
-                    slotProps={{
-                      htmlInput: {
-                        min: 1
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleDishAdd}
-                    disabled={!selectedDish || dishCount < 1}
-                  >Добавить</Button>
-                </Box>
-
-                <List
-                  sx={{
-                    width: '60%',
-                    height: '30vh',
-                    overflowY: 'scroll',
-                  }}
-                >
-                  {cart.map(e => <ListItem
-                    key={e.dish.id}
+                  >{e.dish.title}</Typography>
+                  <Box
                     sx={{
                       display: 'flex',
-                      justifyContent: 'space-between'
+                      alignItems: 'center',
+
                     }}
                   >
-                    <Typography
+                    <Button
                       sx={{
-                        wordBreak: 'break-all',
+                        borderRadius: '50%'
                       }}
-                    >{e.dish.title}</Typography>
-                    <Box
+                      onClick={() => handleDec(e)}
+                    >-</Button>
+                    <Typography>
+                      {e.count}
+                    </Typography>
+                    <Button
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-
+                        borderRadius: '50%'
                       }}
+                      onClick={() => handleInc(e)}
+                    >+</Button>
+                    <Button
+                      sx={{
+                        borderRadius: '50%'
+                      }}
+                      onClick={() => handleDel(e)}
                     >
-                      <Button
-                        sx={{
-                          borderRadius: '50%'
-                        }}
-                        onClick={() => handleDec(e)}
-                      >-</Button>
-                      <Typography>
-                        {e.count}
-                      </Typography>
-                      <Button
-                        sx={{
-                          borderRadius: '50%'
-                        }}
-                        onClick={() => handleInc(e)}
-                      >+</Button>
-                      <Button
-                        sx={{
-                          borderRadius: '50%'
-                        }}
-                        onClick={() => handleDel(e)}
-                      >
-                        <Delete />
-                      </Button>
-                    </Box>
+                      <Delete />
+                    </Button>
+                  </Box>
 
-                  </ListItem>)}
-                </List>
+                </ListItem>)}
+              </List>
 
-              </Box>
+            </Box>
 
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center'
-                }}
-              >
-                <Typography>Итого {cart
-                  .map(e => e.dish.cost * e.count)
-                  .reduce((sum, dish) => sum + dish, 0)} руб.</Typography>
-                <Button
-                  onClick={() => setOpenDishSelector(false)}
-                >Ок</Button>
-              </Box>
-            </Page>
-          </Box>
-        </Modal >
-      }
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center'
+              }}
+            >
+              <Typography>Итого {cart
+                .map(e => e.dish.cost * e.count)
+                .reduce((sum, dish) => sum + dish, 0)} руб.</Typography>
+              <Button
+                onClick={() => setOpenDishSelector(false)}
+              >Ок</Button>
+            </Box>
+          </Page>
+        </Box>
+      </Modal >
     </PageCenter >
   );
 }
