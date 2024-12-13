@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { PaymentContext } from "../../utils/contexts";
 
 export const ReservationStatus: FC = () => {
-    const [load, status, payment] = usePromise(() => api.get(`/payments/${localStorage.getItem('checkId')}`).then(res => res.data));
+    const [load, status, payment] = usePromise(() => api.get(`/payments/check/${localStorage.getItem('checkId')}`).then(res => res.data));
 
     const timer = useRef(0);
 
@@ -25,9 +25,9 @@ export const ReservationStatus: FC = () => {
 
     useEffect(() => {
         if (status === 'fulfilled') {
-            setMsg(payment.payment_status);
+            setMsg(payment);
 
-            if (payment.payment_status === 'successful' || payment.payment_status === 'cancelled') {
+            if (payment === 'successful' || payment === 'cancelled') {
                 localStorage.removeItem('checkId');
                 clearInterval(timer.current);
 
