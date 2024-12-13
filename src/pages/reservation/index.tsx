@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useContext, useEffect, useState } from 'react';
 import { TextField, Button, MenuItem, Select, useTheme, Checkbox, Typography, Modal, Box, CircularProgress, List, ListItem } from '@mui/material';
 // import { Event } from '../../models/event';
 import { Hall } from '../../models/hall';
@@ -21,6 +21,8 @@ import { MenuSelector } from '../../components/menuSelector';
 import { DishListItem } from '../../components/dishListItem';
 import { Page } from '../../components/page';
 import { Delete } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { PaymentContext } from '../../utils/contexts';
 
 interface ICartEntry {
   dish: Dish;
@@ -43,6 +45,10 @@ export const ReservationForm: FC = () => {
 
   const theme = useTheme();
 
+  const nav = useNavigate();
+
+  const [, setCheck] = useContext(PaymentContext);
+
   const [openTableSelector, setOpenSelector] = useState(false);
   const [openDishSelector, setOpenDishSelector] = useState(false);
 
@@ -60,9 +66,9 @@ export const ReservationForm: FC = () => {
 
   const isTimeValid = !!startTime.length && !!endTime.length && startTime < endTime;
 
-  const isCountValid = fullHall || !table
-    || guestsCount <= tables.find(t => t.id === table)!.capacity
-    && guestsCount > 0;
+  const isCountValid = (fullHall && (!hall || guestsCount <= hall!.capacity)) || (!table
+    || (guestsCount <= tables.find(t => t.id === table)!.capacity
+      && guestsCount > 0));
 
   const isValid = !!guestName.length
     && guestPhone.length
@@ -98,7 +104,16 @@ export const ReservationForm: FC = () => {
       }))
   };
 
-  const [submit, submitStatus] = usePromise(ReservationAgent.post);
+  const [submit, submitStatus, submitResult] = usePromise(ReservationAgent.post);
+
+  useEffect(() => {
+    if (submitStatus === 'fulfilled') {
+      localStorage.setItem('checkId', submitResult.match(/(?<=checkId=)\d*/)[0]);
+      setCheck(true);
+      window.open(submitResult);
+      nav("/preservation/status");
+    }
+  }, [submitStatus])
 
   const nameHelper = 'Введите имя, на которое забронирован столик';
   const phoneHelper = 'Введите номер телефона для связи';
@@ -315,10 +330,12 @@ export const ReservationForm: FC = () => {
           slotProps={{
             htmlInput: {
               min: 1,
-              max: table ? tables.find(t => t.id === table)!.capacity : undefined
+              max: (fullHall
+                ? hall?.capacity
+                : tables.find(t => t.id === table)?.capacity) ?? undefined
             }
           }}
-          disabled={fullHall || submitStatus === 'pending'}
+          disabled={submitStatus === 'pending'}
         />
         {/* <Box sx={{
           display: 'flex',
@@ -578,7 +595,7 @@ export const ReservationForm: FC = () => {
             >
               <Typography>Итого {cart
                 .map(e => e.dish.cost * e.count)
-                .reduce((sum, dish) => sum + dish, 0)} руб.</Typography>
+                .reduce((sum, dish) => sum + dish, 0) * guestsCount} руб.</Typography>
               <Button
                 onClick={() => setOpenDishSelector(false)}
               >Ок</Button>
