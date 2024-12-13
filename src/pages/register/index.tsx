@@ -16,12 +16,12 @@ export const RegisterPage: FC = () => {
         if (!accept)
             return;
 
-        UserAgent.save(
+        UserAgent.register(
             new User({
-                login,
+                username: login,
                 password,
                 email,
-                phone
+                phone_number: phone
             }));
     }
 

@@ -3,14 +3,23 @@ import { api } from "./api";
 
 export const UserAgent = {
     promises: {} as {
-        save?: Promise<any>
+        register?: Promise<any>;
+        login?: Promise<any>;
     },
 
-    save(user: User) {
+    register(user: User) {
         const self = UserAgent;
-        if (!self.promises.save)
-            self.promises.save = api.post("/users", user)
-                .finally(() => { delete self.promises.save });
-        return self.promises.save;
+        if (!self.promises.register)
+            self.promises.register = api.post("/register", user)
+                .finally(() => { delete self.promises.register });
+        return self.promises.register;
+    },
+
+    login(user: User) {
+        const self = UserAgent;
+        if (!self.promises.login)
+            self.promises.login = api.post("/login", user)
+                .finally(() => { delete self.promises.login });
+        return self.promises.login;
     }
 }
